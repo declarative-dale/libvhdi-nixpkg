@@ -9,27 +9,36 @@
     libvhdi-nix.url = "github:YOUR-USER/libvhdi-nix";
   };
 
-  outputs = { self, nixpkgs, libvhdi-nix }: {
-    nixosConfigurations.example = nixpkgs.lib.nixosSystem {
-      system = "x86_64-linux";
-      modules = [
-        ({config, pkgs, ... }: {
-          # Install libvhdi tools
-          environment.systemPackages = [
-            libvhdi-nix.packages.x86_64-linux.libvhdi
-          ];
+  outputs =
+    {
+      self,
+      nixpkgs,
+      libvhdi-nix,
+    }:
+    {
+      nixosConfigurations.example = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        modules = [
+          (
+            { config, pkgs, ... }:
+            {
+              # Install libvhdi tools
+              environment.systemPackages = [
+                libvhdi-nix.packages.x86_64-linux.libvhdi
+              ];
 
-          # The package provides:
-          # - vhdiinfo: Display VHD/VHDX information
-          # - vhdimount: Mount VHD/VHDX files via FUSE
-          # - vhdiexport: Export VHD to raw format
+              # The package provides:
+              # - vhdiinfo: Display VHD/VHDX information
+              # - vhdimount: Mount VHD/VHDX files via FUSE
+              # - vhdiexport: Export VHD to raw format
 
-          # Example usage:
-          # $ vhdiinfo /path/to/disk.vhd
-          # $ vhdimount /path/to/disk.vhd /mnt/vhd
-          # $ vhdiexport /path/to/disk.vhd output.raw
-        })
-      ];
+              # Example usage:
+              # $ vhdiinfo /path/to/disk.vhd
+              # $ vhdimount /path/to/disk.vhd /mnt/vhd
+              # $ vhdiexport /path/to/disk.vhd output.raw
+            }
+          )
+        ];
+      };
     };
-  };
 }

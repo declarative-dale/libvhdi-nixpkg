@@ -11,26 +11,37 @@
     };
   };
 
-  outputs = { self, nixpkgs, libvhdiSrc }:
+  outputs =
+    {
+      self,
+      nixpkgs,
+      libvhdiSrc,
+    }:
     let
-      systems = [ "x86_64-linux" "aarch64-linux" ];
+      systems = [
+        "x86_64-linux"
+        "aarch64-linux"
+      ];
       forAllSystems = nixpkgs.lib.genAttrs systems;
     in
     {
-      packages = forAllSystems (system:
+      packages = forAllSystems (
+        system:
         let
           pkgs = nixpkgs.legacyPackages.${system};
         in
         {
           # Development version using flake input
           # Override src to use pre-fetched flake input instead of fetchurl
-          libvhdi = (pkgs.callPackage ./default.nix {
-            version = "20240509";
-            # Placeholder hash - will be overridden by src below
-            srcHash = "sha256-0000000000000000000000000000000000000000000=";
-          }).overrideAttrs (old: {
-            src = libvhdiSrc;
-          });
+          libvhdi =
+            (pkgs.callPackage ./default.nix {
+              version = "20240509";
+              # Placeholder hash - will be overridden by src below
+              srcHash = "sha256-0000000000000000000000000000000000000000000=";
+            }).overrideAttrs
+              (old: {
+                src = libvhdiSrc;
+              });
 
           default = self.packages.${system}.libvhdi;
 
@@ -44,7 +55,8 @@
         }
       );
 
-      devShells = forAllSystems (system:
+      devShells = forAllSystems (
+        system:
         let
           pkgs = nixpkgs.legacyPackages.${system};
         in
