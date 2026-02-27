@@ -17,8 +17,8 @@
   zlib,
 
   # Source parameters
-  version ? "20240509",
-  srcHash ? "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+  version ? "20251119",
+  srcHash ? "sha256-AmzEHlBr70M5mQkKd3UZo8tHFRDcNS+kTWhnz2oOeZA=",
 }:
 
 stdenv.mkDerivation {
