@@ -4,19 +4,10 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-
-    libvhdiSrc = {
-      url = "https://github.com/libyal/libvhdi/releases/download/20240509/libvhdi-alpha-20240509.tar.gz";
-      flake = false;
-    };
   };
 
   outputs =
-    {
-      self,
-      nixpkgs,
-      libvhdiSrc,
-    }:
+    { self, nixpkgs }:
     let
       systems = [
         "x86_64-linux"
@@ -29,29 +20,13 @@
         system:
         let
           pkgs = nixpkgs.legacyPackages.${system};
+          libvhdi = pkgs.callPackage ./default.nix { };
         in
         {
-          # Development version using flake input
-          # Override src to use pre-fetched flake input instead of fetchurl
-          libvhdi =
-            (pkgs.callPackage ./default.nix {
-              version = "20240509";
-              # Placeholder hash - will be overridden by src below
-              srcHash = "sha256-0000000000000000000000000000000000000000000=";
-            }).overrideAttrs
-              (old: {
-                src = libvhdiSrc;
-              });
-
-          default = self.packages.${system}.libvhdi;
-
-          # Test version using fetchurl (as it would work in nixpkgs)
-          # This builds exactly as it would in nixpkgs, fetching source itself
-          libvhdi-nixpkgs-test = pkgs.callPackage ./default.nix {
-            version = "20240509";
-            # Note: This hash needs to be obtained via nix-prefetch-url
-            srcHash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
-          };
+          inherit libvhdi;
+          default = libvhdi;
+          # Alias kept for compatibility with previous test naming.
+          libvhdi-test = libvhdi;
         }
       );
 
@@ -62,29 +37,29 @@
         in
         {
           default = pkgs.mkShell {
-            name = "libvhdi-nix-dev";
+            name = "libvhdi-dev";
             packages = with pkgs; [
-              nix-prefetch-url
+              nix-prefetch-scripts
               nixpkgs-fmt
               nixpkgs-review
               git
               jq
             ];
             shellHook = ''
-              echo "libvhdi-nix development shell"
+              echo "libvhdi development shell"
               echo "=============================="
               echo ""
               echo "Available packages:"
-              echo "  - libvhdi              (development build with flake input)"
-              echo "  - libvhdi-nixpkgs-test (nixpkgs-style build)"
+              echo "  - libvhdi"
+              echo "  - libvhdi-test"
               echo ""
               echo "Useful commands:"
               echo "  nix build .#libvhdi"
-              echo "  nix build .#libvhdi-nixpkgs-test"
+              echo "  nix build .#libvhdi-test"
               echo "  nix flake check"
               echo ""
-              echo "Update source hash:"
-              echo "  nix-prefetch-url https://github.com/libyal/libvhdi/releases/download/<version>/libvhdi-alpha-<version>.tar.gz"
+              echo "Update package metadata:"
+              echo "  ./update.sh"
             '';
           };
         }
@@ -93,8 +68,7 @@
       # Checks for CI
       checks = forAllSystems (system: {
         libvhdi-builds = self.packages.${system}.libvhdi;
-        # Note: nixpkgs-test variant commented out until hash is updated
-        # libvhdi-nixpkgs = self.packages.${system}.libvhdi-nixpkgs-test;
+        libvhdi-test = self.packages.${system}.libvhdi-test;
       });
     };
 }

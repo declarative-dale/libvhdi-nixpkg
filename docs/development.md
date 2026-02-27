@@ -4,58 +4,37 @@
 ## Setup
 
 ```bash
-git clone https://github.com/YOUR-USER/libvhdi-nix.git
-cd libvhdi-nix
+git clone https://github.com/YOUR-USER/libvhdi.git
+cd libvhdi
 nix develop
 ```
 
 ## Building
 
-### Development Build (using flake input)
+### Package Build
 
 ```bash
 nix build .#libvhdi
 ./result/bin/vhdiinfo --version
 ```
 
-### Nixpkgs-Test Build (using fetchurl)
+### Compatibility Alias Build
 
 ```bash
-# Requires updating hash first
-nix build .#libvhdi-nixpkgs-test
+nix build .#libvhdi-test
 ```
 
 ## Updating to New Version
 
-1. **Check for new releases**:
+1. **Update package metadata from latest upstream tag**:
    ```bash
-   curl -s https://api.github.com/repos/libyal/libvhdi/releases/latest | jq -r '.tag_name'
+   ./update.sh
    ```
 
-2. **Update flake.nix**:
-   ```nix
-   libvhdiSrc = {
-     url = "https://github.com/libyal/libvhdi/releases/download/<VERSION>/libvhdi-alpha-<VERSION>.tar.gz";
-     flake = false;
-   };
-   ```
-
-3. **Update flake.lock**:
-   ```bash
-   nix flake lock --update-input libvhdiSrc
-   ```
-
-4. **Get hash for nixpkgs-test**:
-   ```bash
-   nix-prefetch-url https://github.com/libyal/libvhdi/releases/download/<VERSION>/libvhdi-alpha-<VERSION>.tar.gz
-   ```
-
-5. **Update nixpkgs-test variant in flake.nix**
-
-6. **Test both variants**:
+2. **Test both outputs**:
    ```bash
    nix build .#libvhdi
-   nix build .#libvhdi-nixpkgs-test
+   nix build .#libvhdi-test
    ```
 
 ## Testing

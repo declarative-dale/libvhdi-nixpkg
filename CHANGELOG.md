@@ -30,5 +30,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Ready for future nixpkgs submission (pending hash update for nixpkgs-test variant)
 - Nixpkgs submission status: Not yet submitted
 
-[Unreleased]: https://github.com/YOUR-USER/libvhdi-nix/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/YOUR-USER/libvhdi-nix/releases/tag/v1.0.0
+[Unreleased]: https://github.com/YOUR-USER/libvhdi/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/YOUR-USER/libvhdi/releases/tag/v1.0.0

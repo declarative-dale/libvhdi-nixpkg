@@ -7,12 +7,12 @@ This guide outlines the process for submitting the libvhdi package to nixpkgs.
 
 1. **Package builds successfully**:
    ```bash
-   nix build .#libvhdi-nixpkgs-test
+   nix build .#libvhdi
    ```
 
 2. **Source hash is current**:
    ```bash
-   nix-prefetch-url https://github.com/libyal/libvhdi/releases/download/20240509/libvhdi-alpha-20240509.tar.gz
+   ./update.sh
    ```
 
 3. **All tests pass**:
@@ -53,8 +53,8 @@ mkdir -p pkgs/by-name/li/libvhdi
    # Current (with defaults):
    { lib, stdenv, fetchurl, autoreconfHook, pkg-config
    , fuse, fuse3, zlib
-   , version ? "20240509"
-   , srcHash ? "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+   , version ? "20251119"
+   , srcHash ? "sha256-AmzEHlBr70M5mQkKd3UZo8tHFRDcNS+kTWhnz2oOeZA="
    }:
    stdenv.mkDerivation {
      pname = "libvhdi";
@@ -72,7 +72,7 @@ mkdir -p pkgs/by-name/li/libvhdi
    }:
    stdenv.mkDerivation rec {
      pname = "libvhdi";
-     version = "20240509";
+     version = "20251119";
 
      src = fetchurl {
        url = "https://github.com/libyal/libvhdi/releases/download/${version}/libvhdi-alpha-${version}.tar.gz";
@@ -86,7 +86,7 @@ mkdir -p pkgs/by-name/li/libvhdi
    }
    ```
 
-   **Note**: The package is already in pure nixpkgs form - the flake.nix handles development mode by overriding `src`. You just need to remove the default parameters and hardcode the values.
+   **Note**: The package is already in pure nixpkgs form. For nixpkgs submission, remove default parameter values and hardcode the current version/hash.
 
 ### Step 4: Add Yourself to Maintainers (if needed)
 
@@ -133,7 +133,7 @@ Provides:
 - Source: GitHub libyal/libvhdi releases
 - License: LGPL-3.0-or-later
 - Build system: Autotools
-- Version: 20240509
+- Version: 20251119
 ```
 
 ## References

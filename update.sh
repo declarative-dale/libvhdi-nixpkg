@@ -1,25 +1,43 @@
 #!/usr/bin/env nix-shell
-#!nix-shell -i bash -p curl jq gnused
+#!nix-shell -i bash -p curl git gnused
 
 set -euo pipefail
 
 cd "$(dirname "$0")"
 
-latest_version=$(curl -fsSL "https://api.github.com/repos/libyal/libvhdi/tags?per_page=100" | jq -r '
-  [ .[]
-    | .name
-    | select(test("^[0-9]{8}$"))
-  ]
-  | sort
-  | last
-')
+current_version=$(sed -nE 's/^[[:space:]]*version[[:space:]]*\?[[:space:]]*"([0-9]{8})".*/\1/p' default.nix | head -1)
+
+latest_version=$(
+  git ls-remote --tags --refs "https://github.com/libyal/libvhdi.git" \
+    | sed -nE 's#.*refs/tags/([0-9]{8})$#\1#p' \
+    | sort -u \
+    | tail -1
+)
 
 if [ -z "$latest_version" ] || [ "$latest_version" = "null" ]; then
-    echo "Failed to fetch latest version tag" >&2
+    echo "Failed to fetch latest version tag from https://github.com/libyal/libvhdi/tags" >&2
     exit 1
 fi
 
+if [ -z "$current_version" ]; then
+    echo "Failed to read current version from default.nix" >&2
+    exit 1
+fi
+
+echo "Current libvhdi version: $current_version"
 echo "Latest libvhdi version: $latest_version"
+
+if [ "$latest_version" = "$current_version" ]; then
+    echo "default.nix is already up to date"
+    exit 0
+fi
+
+tarball_url="https://github.com/libyal/libvhdi/releases/download/${latest_version}/libvhdi-alpha-${latest_version}.tar.gz"
+echo "Checking release tarball: $tarball_url"
+if ! curl -fsIL "$tarball_url" >/dev/null; then
+    echo "Release tarball not found for tag ${latest_version}" >&2
+    exit 1
+fi
 
 echo "Prefetching source hash..."
 placeholder_hash="sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
