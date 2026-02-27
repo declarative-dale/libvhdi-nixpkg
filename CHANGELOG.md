@@ -6,8 +6,6 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-
 ## [20251119] - 2026-02-27
 
 ### Changed
@@ -47,6 +45,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Ready for future nixpkgs submission (pending hash update for nixpkgs-test variant)
 - Nixpkgs submission status: Not yet submitted
 
-[Unreleased]: https://codeberg.org/NiXOA/libvhdi/compare/20251119...main
 [20251119]: https://codeberg.org/NiXOA/libvhdi/releases/tag/20251119
 [20240509]: https://codeberg.org/NiXOA/libvhdi/releases/tag/20240509
