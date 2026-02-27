@@ -3,6 +3,9 @@
 
 Nix package for [libvhdi](https://github.com/libyal/libvhdi) - Library and tools to access the Virtual Hard Disk (VHD) image format, structured for eventual submission to nixpkgs.
 
+Canonical repository: https://codeberg.org/NiXOA/libvhdi
+Current release: `20251119`
+
 ## About
 
 libvhdi provides:
@@ -20,7 +23,7 @@ This package supports both VHD (Virtual Hard Disk) and VHDX (Virtual Hard Disk v
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    libvhdi.url = "github:YOUR-USER/libvhdi";
+    libvhdi.url = "git+https://codeberg.org/NiXOA/libvhdi.git";
   };
 
   outputs = { self, nixpkgs, libvhdi }: {
@@ -42,7 +45,7 @@ This package supports both VHD (Virtual Hard Disk) and VHDX (Virtual Hard Disk v
 
 ```bash
 # Clone repository
-git clone https://github.com/YOUR-USER/libvhdi.git
+git clone https://codeberg.org/NiXOA/libvhdi.git
 cd libvhdi
 
 # Build package
@@ -121,7 +124,7 @@ Upstream libvhdi: LGPL-3.0-or-later
 ## Related Projects
 
 - [NiXOA](https://codeberg.org/NiXOA) - Full NixOS deployment system for Xen Orchestra
-- [xen-orchestra-ce-nix](https://github.com/YOUR-USER/xen-orchestra-ce-nix) - Xen Orchestra CE packaging (which uses libvhdi)
+- [xen-orchestra-ce-nix](https://codeberg.org/NiXOA/xen-orchestra-ce-nix) - Xen Orchestra CE packaging (which uses libvhdi)
 - [libvhdi](https://github.com/libyal/libvhdi) - Upstream library
 
 ## Maintainers

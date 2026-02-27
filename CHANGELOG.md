@@ -8,7 +8,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.0.0] - 2026-01-10
+## [20251119] - 2026-02-27
+
+### Changed
+- Updated package version to 20251119.
+- Refactored repository structure for nixpkgs-candidate packaging.
+- Standardized flake outputs around package name `libvhdi` with compatibility alias `libvhdi-test`.
+- Removed the `examples/` directory and refreshed documentation.
+
+### Added
+- `update.sh` now checks upstream `YYYYMMDD` tags from `https://github.com/libyal/libvhdi/tags`,
+  verifies the release tarball exists, and updates both `version` and `srcHash` in `default.nix`.
+- Codeberg release tags published for this line: `20251119` and `latest`.
+
+### Notes
+- Repository: https://codeberg.org/NiXOA/libvhdi
+- Nixpkgs submission status: Not yet submitted
+
+## [20240509] - 2026-01-10
 
 ### Added
 - Initial standalone repository structure for nixpkgs submission
@@ -30,5 +47,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Ready for future nixpkgs submission (pending hash update for nixpkgs-test variant)
 - Nixpkgs submission status: Not yet submitted
 
-[Unreleased]: https://github.com/YOUR-USER/libvhdi/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/YOUR-USER/libvhdi/releases/tag/v1.0.0
+[Unreleased]: https://codeberg.org/NiXOA/libvhdi/compare/20251119...main
+[20251119]: https://codeberg.org/NiXOA/libvhdi/releases/tag/20251119
+[20240509]: https://codeberg.org/NiXOA/libvhdi/releases/tag/20240509

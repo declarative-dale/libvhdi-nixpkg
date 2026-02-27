@@ -4,7 +4,7 @@
 ## Setup
 
 ```bash
-git clone https://github.com/YOUR-USER/libvhdi.git
+git clone https://codeberg.org/NiXOA/libvhdi.git
 cd libvhdi
 nix develop
 ```
@@ -52,6 +52,9 @@ nix build .#libvhdi
 2. Commit changes
 3. Tag release:
    ```bash
-   git tag -a v1.0.1 -m "Release v1.0.1"
-   git push origin v1.0.1
+   VERSION=20251119
+   git tag -fa "$VERSION" -m "Release $VERSION"
+   git tag -fa latest -m "Latest release $VERSION"
+   git push --force origin "$VERSION"
+   git push --force origin latest
    ```

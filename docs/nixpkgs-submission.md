@@ -3,6 +3,9 @@
 
 This guide outlines the process for submitting the libvhdi package to nixpkgs.
 
+Upstream packaging repository: https://codeberg.org/NiXOA/libvhdi  
+Current package release tag: `20251119`
+
 ## Prerequisites
 
 1. **Package builds successfully**:
