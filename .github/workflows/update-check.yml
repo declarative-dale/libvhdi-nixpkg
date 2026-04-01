@@ -1,0 +1,79 @@
+name: Check for libvhdi updates
+
+on:
+  schedule:
+    - cron: '15 5 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Run update detection and validation without creating a pull request"
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  check-update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v27
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+
+      - name: Run updater script
+        run: |
+          chmod +x ./update.sh
+          ./update.sh
+
+      - name: Detect changes
+        id: detect
+        run: |
+          if git diff --quiet -- default.nix; then
+            echo "update_available=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          new_version=$(sed -nE 's/^[[:space:]]*version[[:space:]]*\?[[:space:]]*"([0-9]{8})".*/\1/p' default.nix | head -1)
+
+          echo "update_available=true" >> "$GITHUB_OUTPUT"
+          echo "new_version=$new_version" >> "$GITHUB_OUTPUT"
+
+      - name: Validate updated package
+        if: steps.detect.outputs.update_available == 'true'
+        run: nix build .#libvhdi -L
+
+      - name: Report dry run result
+        if: steps.detect.outputs.update_available == 'true' && github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run == 'true'
+        run: |
+          echo "Dry run detected an available libvhdi update to ${{
+            steps.detect.outputs.new_version
+          }}."
+          echo "Validation succeeded and no pull request was created."
+
+      - name: Create Pull Request
+        if: steps.detect.outputs.update_available == 'true' && (github.event_name != 'workflow_dispatch' || github.event.inputs.dry_run != 'true')
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "libvhdi: update to ${{ steps.detect.outputs.new_version }}"
+          title: "libvhdi: update to ${{ steps.detect.outputs.new_version }}"
+          body: |
+            Automated update to libvhdi ${{ steps.detect.outputs.new_version }}.
+
+            Changes include:
+            - `version`
+            - `srcHash`
+
+            Validation:
+            - `nix build .#libvhdi -L`
+          branch: update/libvhdi-${{ steps.detect.outputs.new_version }}
+          add-paths: |
+            default.nix
+          delete-branch: true
