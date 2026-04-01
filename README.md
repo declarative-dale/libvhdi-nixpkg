@@ -11,8 +11,6 @@ Current release: `20251119`
 libvhdi provides:
 - **vhdiinfo**: Display information about VHD/VHDX files
 - **vhdimount**: FUSE-based tool to mount VHD/VHDX as a filesystem
-- **vhdiexport**: Export VHD data to raw format
-
 This package supports both VHD (Virtual Hard Disk) and VHDX (Virtual Hard Disk v2) formats.
 
 ## Usage
@@ -98,9 +96,8 @@ nix flake check
 nix build .#libvhdi
 
 # Test utilities
-./result/bin/vhdiinfo --version
-./result/bin/vhdimount --version
-./result/bin/vhdiexport --version
+./result/bin/vhdiinfo -V
+./result/bin/vhdimount -V
 ```
 
 ## Architecture

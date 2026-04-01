@@ -36,7 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Technical Details
 - libvhdi version: 20240509
 - Supports VHD and VHDX formats
-- Includes vhdiinfo, vhdimount, and vhdiexport tools
+- Includes vhdiinfo and vhdimount tools
 - FUSE2 and FUSE3 support
 
 ### Notes

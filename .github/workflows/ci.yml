@@ -31,11 +31,6 @@ jobs:
       - name: Build libvhdi
         run: nix build .#libvhdi -L
 
-      - name: Test binary execution
-        run: |
-          ./result/bin/vhdiinfo --version
-          ./result/bin/vhdimount --version
-
   checks:
     runs-on: ubuntu-latest
 

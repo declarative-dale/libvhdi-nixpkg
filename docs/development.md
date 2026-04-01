@@ -15,7 +15,7 @@ nix develop
 
 ```bash
 nix build .#libvhdi
-./result/bin/vhdiinfo --version
+./result/bin/vhdiinfo -V
 ```
 
 ### Compatibility Alias Build
@@ -42,8 +42,8 @@ nix build .#libvhdi-test
 ```bash
 nix flake check
 nix build .#libvhdi
-./result/bin/vhdiinfo --version
-./result/bin/vhdimount --version
+./result/bin/vhdiinfo -V
+./result/bin/vhdimount -V
 ```
 
 ## Release Process

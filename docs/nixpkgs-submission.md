@@ -121,7 +121,6 @@ Add libvhdi package - Library and tools to access VHD/VHDX image formats.
 Provides:
 - vhdiinfo: Display VHD/VHDX information
 - vhdimount: FUSE-based VHD/VHDX mounter
-- vhdiexport: Export VHD to raw format
 
 ### Things Done
 
