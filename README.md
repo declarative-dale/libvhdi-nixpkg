@@ -129,4 +129,4 @@ Upstream libvhdi: LGPL-3.0-or-later
 
 ## Maintainers
 
-- Your Name (@your-github-username)
+- @declarative-dale
