@@ -132,11 +132,23 @@ libvhdi `YYYYMMDD` tag, it:
 - formats and lints the package files
 - builds `.#libvhdi`
 - runs `nix flake check --no-write-lock-file -L`
+- pushes the built `result` output to Cachix when `CACHIX_CACHE_NAME` and
+  `CACHIX_AUTH_TOKEN` are configured
 - commits the updated `default.nix`
 - creates and pushes a repository tag with the same name as the upstream tag
 
+The workflow configures Cachix with `skipPush: true` before building, then calls
+`cachix push` explicitly on the `result` path after `nix build`. This avoids
+uploading fetched source tarballs or other store paths merely produced during
+the build.
+
+The regular CI workflow also has a `tag-release` job, modeled after the
+`xo-nixpkg` workflow. On successful pushes to `main`, it verifies that the
+packaged `YYYYMMDD` version exists as an upstream libvhdi tag and creates the
+same tag in this repository when it is missing.
+
 Manual runs support a `dry_run` option that updates, builds, and checks without
-pushing a commit or tag.
+pushing a Cachix path, commit, or tag.
 
 ## Nixpkgs Submission
 

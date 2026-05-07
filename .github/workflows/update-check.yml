@@ -39,7 +39,7 @@ jobs:
         with:
           name: ${{ vars.CACHIX_CACHE_NAME }}
           authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
-          skipPush: ${{ secrets.CACHIX_AUTH_TOKEN == '' }}
+          skipPush: true
         continue-on-error: true
 
       - name: Detect upstream release
@@ -128,6 +128,22 @@ jobs:
         run: |
           ldd result/bin/vhdimount
           ldd result/bin/vhdimount | grep -E 'libfuse3|libfuse'
+
+      - name: Push built package to Cachix
+        if: ${{ steps.upstream.outputs.update_available == 'true' && (github.event_name != 'workflow_dispatch' || inputs.dry_run != true) && vars.CACHIX_CACHE_NAME != '' }}
+        env:
+          CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${CACHIX_AUTH_TOKEN:-}" ]; then
+            echo "CACHIX_AUTH_TOKEN is not configured; skipping Cachix push."
+            exit 0
+          fi
+
+          out_path=$(readlink -f result)
+          echo "Pushing built package output: $out_path"
+          printf '%s\n' "$out_path" | cachix push "${{ vars.CACHIX_CACHE_NAME }}"
 
       - name: Commit and tag package update
         if: ${{ steps.upstream.outputs.update_available == 'true' && (github.event_name != 'workflow_dispatch' || inputs.dry_run != true) }}

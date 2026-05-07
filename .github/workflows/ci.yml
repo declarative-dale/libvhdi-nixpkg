@@ -27,11 +27,27 @@ jobs:
         with:
           name: ${{ vars.CACHIX_CACHE_NAME }}
           authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
-          skipPush: ${{ secrets.CACHIX_AUTH_TOKEN == '' }}
+          skipPush: true
         continue-on-error: true
 
       - name: Build libvhdi
         run: nix build .#libvhdi -L
+
+      - name: Push built package to Cachix
+        if: vars.CACHIX_CACHE_NAME != ''
+        env:
+          CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${CACHIX_AUTH_TOKEN:-}" ]; then
+            echo "CACHIX_AUTH_TOKEN is not configured; skipping Cachix push."
+            exit 0
+          fi
+
+          out_path=$(readlink -f result)
+          echo "Pushing built package output: $out_path"
+          printf '%s\n' "$out_path" | cachix push "${{ vars.CACHIX_CACHE_NAME }}"
 
   checks:
     runs-on: ubuntu-latest
@@ -47,3 +63,101 @@ jobs:
 
       - name: Run flake checks
         run: nix flake check -L
+
+  tag-release:
+    runs-on: ubuntu-latest
+    needs:
+      - build
+      - checks
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
+
+    steps:
+      - name: Create GitHub App token
+        id: app_token
+        continue-on-error: true
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ vars.UPDATE_GITHUB_APP_ID }}
+          private-key: ${{ secrets.UPDATE_GITHUB_APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-workflows: write
+
+      - name: Checkout repository
+        if: steps.app_token.outcome == 'success'
+        uses: actions/checkout@v5
+        with:
+          token: ${{ steps.app_token.outputs.token }}
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Detect libvhdi version tag
+        if: steps.app_token.outcome == 'success'
+        id: detect_tag
+        run: |
+          set -euo pipefail
+
+          write_output() {
+            printf '%s\n' "$@" >> "$GITHUB_OUTPUT"
+          }
+
+          version=$(sed -nE 's/^[[:space:]]*version[[:space:]]*=[[:space:]]*"([0-9]{8})";.*/\1/p' default.nix | head -n 1)
+
+          if [ -z "$version" ]; then
+            echo "Failed to extract libvhdi version from default.nix" >&2
+            exit 1
+          fi
+
+          if ! git ls-remote --exit-code --tags "https://github.com/libyal/libvhdi.git" "refs/tags/$version" >/dev/null; then
+            echo "Package version $version does not exist as an upstream libvhdi tag" >&2
+            exit 1
+          fi
+
+          if git rev-parse -q --verify "refs/tags/$version" >/dev/null; then
+            existing_commit=$(git rev-list -n 1 "$version")
+            if [ "$existing_commit" != "$GITHUB_SHA" ]; then
+              {
+                echo "Tag $version already exists at $existing_commit."
+                echo "Leaving it unchanged instead of moving an existing release tag."
+              } >> "$GITHUB_STEP_SUMMARY"
+            fi
+
+            write_output \
+              "create_tag=false" \
+              "tag_name=$version" \
+              "version=$version"
+            exit 0
+          fi
+
+          write_output \
+            "create_tag=true" \
+            "tag_name=$version" \
+            "version=$version"
+
+      - name: Create libvhdi version tag
+        if: steps.detect_tag.outputs.create_tag == 'true'
+        env:
+          TAG_NAME: ${{ steps.detect_tag.outputs.tag_name }}
+          TARGET_COMMIT: ${{ github.sha }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag "$TAG_NAME" "$TARGET_COMMIT"
+          git push origin "refs/tags/$TAG_NAME"
+
+      - name: Summarize tagging result
+        run: |
+          if [ "${{ steps.app_token.outcome }}" != "success" ]; then
+            {
+              echo "Automatic libvhdi version tagging skipped because GitHub App token creation failed."
+              echo ""
+              echo "Configure the GitHub App credentials before rerunning this workflow:"
+              echo "- Variable: \`UPDATE_GITHUB_APP_ID\`"
+              echo "- Secret: \`UPDATE_GITHUB_APP_PRIVATE_KEY\`"
+            } >> "$GITHUB_STEP_SUMMARY"
+          elif [ "${{ steps.detect_tag.outputs.create_tag }}" = "true" ]; then
+            echo "Created libvhdi version tag \`${{ steps.detect_tag.outputs.tag_name }}\` for commit \`${{ github.sha }}\`." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "No new libvhdi version tag was needed for \`${{ steps.detect_tag.outputs.tag_name }}\`." >> "$GITHUB_STEP_SUMMARY"
+          fi
