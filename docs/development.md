@@ -30,6 +30,8 @@ nix build .#libvhdi-test
    ```bash
    ./update.sh
    ```
+   The updater uses Nix's built-in `nix store prefetch-file` to calculate the
+   source hash.
 
 2. **Test both outputs**:
    ```bash
@@ -42,11 +44,18 @@ nix build .#libvhdi-test
 ```bash
 nix flake check
 nix build .#libvhdi
+nix develop .#default -c shellcheck update.sh
 ./result/bin/vhdiinfo -V
 ./result/bin/vhdimount -V
 ```
 
 ## Release Process
+
+GitHub Actions runs `.github/workflows/update-check.yml` daily. When a new
+upstream libvhdi tag is detected, the workflow updates `default.nix`, builds and
+checks the package, commits the change, and pushes a matching repository tag.
+
+Manual release steps:
 
 1. Update CHANGELOG.md
 2. Commit changes

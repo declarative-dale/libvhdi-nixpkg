@@ -39,9 +39,9 @@
           default = pkgs.mkShell {
             name = "libvhdi-dev";
             packages = with pkgs; [
-              nix-prefetch-scripts
               nixpkgs-fmt
               nixpkgs-review
+              shellcheck
               git
               jq
             ];

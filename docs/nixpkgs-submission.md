@@ -42,58 +42,19 @@ mkdir -p pkgs/by-name/li/libvhdi
 
 ### Step 3: Prepare Package File
 
-1. **Copy file**:
+Copy the package file:
    ```bash
    cp default.nix pkgs/by-name/li/libvhdi/package.nix
    ```
 
-2. **Edit package.nix**:
-   - Remove default parameter values (the `? "..."` parts)
-   - Update to use actual version and source hash
-   - Update maintainers list
-
-   ```nix
-   # Current (with defaults):
-   { lib, stdenv, fetchurl, autoreconfHook, pkg-config
-   , fuse, fuse3, zlib
-   , version ? "20251119"
-   , srcHash ? "sha256-AmzEHlBr70M5mQkKd3UZo8tHFRDcNS+kTWhnz2oOeZA="
-   }:
-   stdenv.mkDerivation {
-     pname = "libvhdi";
-     inherit version;
-     src = fetchurl {
-       url = "https://github.com/libyal/libvhdi/releases/download/${version}/libvhdi-alpha-${version}.tar.gz";
-       hash = srcHash;
-     };
-     ...
-   }
-
-   # For nixpkgs (remove defaults, hardcode values):
-   { lib, stdenv, fetchurl, autoreconfHook, pkg-config
-   , fuse, fuse3, zlib
-   }:
-   stdenv.mkDerivation rec {
-     pname = "libvhdi";
-     version = "20251119";
-
-     src = fetchurl {
-       url = "https://github.com/libyal/libvhdi/releases/download/${version}/libvhdi-alpha-${version}.tar.gz";
-       hash = "sha256-ACTUAL-HASH-HERE";
-     };
-     ...
-     meta = with lib; {
-       ...
-       maintainers = with maintainers; [ your-github-username ];
-     };
-   }
-   ```
-
-   **Note**: The package is already in pure nixpkgs form. For nixpkgs submission, remove default parameter values and hardcode the current version/hash.
+The repository package is already in nixpkgs form: `stdenv.mkDerivation rec`, hardcoded
+`version` and `hash`, upstream tests enabled, and no flake-only parameters.
 
 ### Step 4: Add Yourself to Maintainers (if needed)
 
-Edit `maintainers/maintainer-list.nix` - see xen-orchestra-ce-nix nixpkgs-submission.md for details.
+If the maintainer is not already present in nixpkgs, add the entry to
+`maintainers/maintainer-list.nix` and update `meta.maintainers` to reference that
+maintainer attribute if requested during review.
 
 ### Step 5: Test the Package
 

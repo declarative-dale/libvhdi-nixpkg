@@ -1,21 +1,47 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
-# libvhdi
+# libvhdi-nix
 
-Nix package for [libvhdi](https://github.com/libyal/libvhdi) - Library and tools to access the Virtual Hard Disk (VHD) image format, structured for eventual submission to nixpkgs.
+Standalone Nix packaging for [libvhdi](https://github.com/libyal/libvhdi), the
+libyal library and toolset for reading Virtual Hard Disk images.
 
-Canonical repository: https://codeberg.org/NiXOA/libvhdi
-Current release: `20251119`
+This repository is kept close to nixpkgs form so `default.nix` can be copied to
+`pkgs/by-name/li/libvhdi/package.nix` with minimal changes.
 
-## About
+Current upstream release: `20251119`
 
-libvhdi provides:
-- **vhdiinfo**: Display information about VHD/VHDX files
-- **vhdimount**: FUSE-based tool to mount VHD/VHDX as a filesystem
-This package supports both VHD (Virtual Hard Disk) and VHDX (Virtual Hard Disk v2) formats.
+## What It Provides
 
-## Usage
+- `libvhdi`: shared library for VHD and VHDX access
+- `vhdiinfo`: command-line VHD/VHDX metadata inspection tool
+- `vhdimount`: FUSE-based VHD/VHDX mounting tool
 
-### With Flakes
+Python bindings are disabled for the initial package. Both `fuse` and `fuse3`
+remain in `buildInputs` intentionally: downstream users still need FUSE2
+compatibility, while the current build detects and links `libfuse3` when it is
+available.
+
+## Quick Start
+
+Build the package:
+
+```bash
+nix build .#libvhdi -L
+```
+
+Run the installed tools:
+
+```bash
+./result/bin/vhdiinfo -V
+./result/bin/vhdimount -V
+```
+
+Run the flake checks:
+
+```bash
+nix flake check --no-write-lock-file -L
+```
+
+## Flake Usage
 
 ```nix
 {
@@ -24,7 +50,7 @@ This package supports both VHD (Virtual Hard Disk) and VHDX (Virtual Hard Disk v
     libvhdi.url = "git+https://codeberg.org/NiXOA/libvhdi.git";
   };
 
-  outputs = { self, nixpkgs, libvhdi }: {
+  outputs = { nixpkgs, libvhdi, ... }: {
     nixosConfigurations.myhost = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
       modules = [
@@ -39,91 +65,116 @@ This package supports both VHD (Virtual Hard Disk) and VHDX (Virtual Hard Disk v
 }
 ```
 
-### Traditional Nix
+## Outputs
 
-```bash
-# Clone repository
-git clone https://codeberg.org/NiXOA/libvhdi.git
-cd libvhdi
+- `packages.x86_64-linux.libvhdi`
+- `packages.x86_64-linux.default`
+- `packages.x86_64-linux.libvhdi-test`
+- `checks.x86_64-linux.libvhdi-builds`
+- `checks.x86_64-linux.libvhdi-test`
 
-# Build package
-nix-build -A libvhdi
-```
+The flake also declares `aarch64-linux` outputs. Local checks on non-matching
+systems are skipped unless you explicitly ask Nix to evaluate all systems.
 
 ## Development
 
+Enter the development shell:
+
 ```bash
-# Enter development shell
 nix develop
-
-# Build package
-nix build .#libvhdi
-
-# Build compatibility test alias
-nix build .#libvhdi-test
-
-# Run checks
-nix flake check
 ```
+
+Common checks:
+
+```bash
+nix develop .#default -c nixpkgs-fmt --check default.nix flake.nix
+nix develop .#default -c shellcheck update.sh
+nix build .#libvhdi -L
+nix flake check --no-write-lock-file -L
+```
+
+The derivation enables upstream `make check` and patches test shebangs before
+the check phase. The install check verifies that `libvhdi.so`, `vhdiinfo`, and
+`vhdimount` are installed, then runs both tools with `-V`.
+
+## Updating
+
+Update `default.nix` to the newest upstream `YYYYMMDD` release tag:
+
+```bash
+./update.sh
+```
+
+The updater:
+
+- reads the current hardcoded `version` from `default.nix`
+- finds the latest upstream release tag from `libyal/libvhdi`
+- verifies that the release tarball exists
+- prefetches the source with `nix store prefetch-file`
+- updates the hardcoded `version` and `hash`
+
+After an update, run:
+
+```bash
+nix develop .#default -c nixpkgs-fmt default.nix flake.nix
+nix build .#libvhdi -L
+nix flake check --no-write-lock-file -L
+```
+
+## Update Automation
+
+The GitHub Actions workflow in
+[.github/workflows/update-check.yml](.github/workflows/update-check.yml) runs on
+a daily schedule and can also be started manually. When it sees a newer upstream
+libvhdi `YYYYMMDD` tag, it:
+
+- runs `./update.sh`, which uses Nix's built-in `nix store prefetch-file`
+- formats and lints the package files
+- builds `.#libvhdi`
+- runs `nix flake check --no-write-lock-file -L`
+- commits the updated `default.nix`
+- creates and pushes a repository tag with the same name as the upstream tag
+
+Manual runs support a `dry_run` option that updates, builds, and checks without
+pushing a commit or tag.
 
 ## Nixpkgs Submission
 
-This package is structured for submission to nixpkgs. See [docs/nixpkgs-submission.md](docs/nixpkgs-submission.md) for the detailed submission process.
+The package is intended for:
 
-When submitted to nixpkgs, it will be located at:
-- `pkgs/by-name/li/libvhdi/package.nix`
-
-**Current Status:** Not yet submitted
-
-## Updating to New Version
-
-```bash
-# Update version + srcHash from latest YYYYMMDD upstream tag
-./update.sh
-
-# Test builds
-nix build .#libvhdi
-nix build .#libvhdi-test
+```text
+pkgs/by-name/li/libvhdi/package.nix
 ```
 
-## Testing
+See [docs/nixpkgs-submission.md](docs/nixpkgs-submission.md) for the full
+submission workflow. In a nixpkgs checkout, copy `default.nix` to the package
+path, add or reference the maintainer entry requested by nixpkgs review, and
+run:
 
 ```bash
-# Run all flake checks
-nix flake check
-
-# Test libvhdi
-nix build .#libvhdi
-
-# Test utilities
-./result/bin/vhdiinfo -V
-./result/bin/vhdimount -V
+nix-build -A libvhdi
+nixpkgs-review wip
 ```
 
-## Architecture
+## Repository Layout
 
-This repository keeps the **package definition pure** and **flake output minimal**:
-
-- **Package file (`default.nix`)**: Pure nixpkgs-style package that uses `fetchurl`
-- **Flake (`flake.nix`)**: Exposes the package on supported systems with a small compatibility alias (`libvhdi-test`)
-
-This approach ensures:
-1. `default.nix` is exactly as it'll appear in nixpkgs
-2. No flake-specific logic in package definition
-3. Updates happen in one place (`default.nix`) via `./update.sh`
+```text
+.
+├── default.nix                 # nixpkgs-style package expression
+├── flake.nix                   # package outputs, checks, and dev shell
+├── update.sh                   # upstream release/hash updater
+├── docs/
+│   ├── development.md
+│   └── nixpkgs-submission.md
+└── README.md
+```
 
 ## License
 
-Apache-2.0 wrapper - See [LICENSE](LICENSE)
+This packaging repository is Apache-2.0. See [LICENSE](LICENSE).
 
-Upstream libvhdi: LGPL-3.0-or-later
+Upstream libvhdi is LGPL-3.0-or-later.
 
-## Related Projects
+## Maintainer
 
-- [NiXOA](https://codeberg.org/NiXOA) - Full NixOS deployment system for Xen Orchestra
-- [xen-orchestra-ce-nix](https://codeberg.org/NiXOA/xen-orchestra-ce-nix) - Xen Orchestra CE packaging (which uses libvhdi)
-- [libvhdi](https://github.com/libyal/libvhdi) - Upstream library
-
-## Maintainers
-
-- @declarative-dale
+- Dale Morgan, `@declarative-dale`

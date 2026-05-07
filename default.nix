@@ -6,28 +6,24 @@
 # When submitting to nixpkgs, it will be placed at:
 # pkgs/by-name/li/libvhdi/package.nix
 
-{
-  lib,
-  stdenv,
-  fetchurl,
-  autoreconfHook,
-  pkg-config,
-  fuse,
-  fuse3,
-  zlib,
-
-  # Source parameters
-  version ? "20251119",
-  srcHash ? "sha256-AmzEHlBr70M5mQkKd3UZo8tHFRDcNS+kTWhnz2oOeZA=",
+{ lib
+, stdenv
+, fetchurl
+, autoreconfHook
+, pkg-config
+, fuse
+, fuse3
+, zlib
+,
 }:
 
-stdenv.mkDerivation {
+stdenv.mkDerivation rec {
   pname = "libvhdi";
-  inherit version;
+  version = "20251119";
 
   src = fetchurl {
     url = "https://github.com/libyal/libvhdi/releases/download/${version}/libvhdi-alpha-${version}.tar.gz";
-    hash = srcHash;
+    hash = "sha256-AmzEHlBr70M5mQkKd3UZo8tHFRDcNS+kTWhnz2oOeZA=";
   };
 
   nativeBuildInputs = [
@@ -36,8 +32,10 @@ stdenv.mkDerivation {
   ];
 
   buildInputs = [
-    fuse # FUSE2 for vhdimount
-    fuse3 # FUSE3 support
+    # Keep both FUSE generations: downstream users still need FUSE2 compatibility,
+    # while this build detects and links libfuse3 when it is available.
+    fuse
+    fuse3
     zlib # Compression support
   ];
 
@@ -46,36 +44,24 @@ stdenv.mkDerivation {
     "--enable-static=no"
     "--enable-python=no"
     "--with-libfuse=yes"
-    "--enable-multi-threading=yes"
+    "--enable-multi-threading-support"
     "--enable-wide-character-type"
   ];
 
   enableParallelBuilding = true;
+  doCheck = true;
   doInstallCheck = true;
 
-  postInstall = ''
-    # Verify the library and tools were built
-    if [ ! -f "$out/lib/libvhdi.so" ]; then
-      echo "Error: libvhdi.so not found after build" >&2
-      exit 1
-    fi
-
-    if [ ! -f "$out/bin/vhdimount" ]; then
-      echo "Error: vhdimount tool not found after build" >&2
-      exit 1
-    fi
-
-    if [ ! -f "$out/bin/vhdiinfo" ]; then
-      echo "Error: vhdiinfo tool not found after build" >&2
-      exit 1
-    fi
-
-    echo "libvhdi tools installed:"
-    ls -la "$out/bin/"
+  preCheck = ''
+    patchShebangs tests
   '';
 
   installCheckPhase = ''
     runHook preInstallCheck
+
+    test -f "$out/lib/libvhdi.so"
+    test -f "$out/bin/vhdiinfo"
+    test -f "$out/bin/vhdimount"
 
     "$out/bin/vhdiinfo" -V
     "$out/bin/vhdimount" -V
@@ -96,8 +82,12 @@ stdenv.mkDerivation {
     homepage = "https://github.com/libyal/libvhdi";
     license = licenses.lgpl3Plus;
     platforms = platforms.linux;
-    maintainers = with maintainers; [
-      # Add your GitHub username here when submitting to nixpkgs
+    maintainers = [
+      {
+        name = "Dale Morgan";
+        email = "mail@dalemorgan.us";
+        github = "declarative-dale";
+      }
     ];
   };
 }
