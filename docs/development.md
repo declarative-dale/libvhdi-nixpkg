@@ -18,6 +18,17 @@ nix build .#libvhdi
 ./result/bin/vhdiinfo -V
 ```
 
+### FUSE Backend Builds
+
+```bash
+nix build .#libvhdi-fuse2
+nix build .#libvhdi-fuse3
+```
+
+Upstream libvhdi chooses one FUSE backend at configure time. The default
+`libvhdi` output uses FUSE3, while `libvhdi-fuse2` keeps a FUSE2 compatibility
+build available.
+
 ### Compatibility Alias Build
 
 ```bash
@@ -33,10 +44,10 @@ nix build .#libvhdi-test
    The updater uses Nix's built-in `nix store prefetch-file` to calculate the
    source hash.
 
-2. **Test both outputs**:
+2. **Test both FUSE outputs**:
    ```bash
-   nix build .#libvhdi
-   nix build .#libvhdi-test
+   nix build .#libvhdi-fuse2
+   nix build .#libvhdi-fuse3
    ```
 
 ## Testing
@@ -44,6 +55,8 @@ nix build .#libvhdi-test
 ```bash
 nix flake check
 nix build .#libvhdi
+nix build .#libvhdi-fuse2
+nix build .#libvhdi-fuse3
 nix develop .#default -c shellcheck update.sh
 ./result/bin/vhdiinfo -V
 ./result/bin/vhdimount -V

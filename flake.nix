@@ -11,7 +11,6 @@
     let
       systems = [
         "x86_64-linux"
-        "aarch64-linux"
       ];
       forAllSystems = nixpkgs.lib.genAttrs systems;
     in
@@ -20,13 +19,20 @@
         system:
         let
           pkgs = nixpkgs.legacyPackages.${system};
-          libvhdi = pkgs.callPackage ./default.nix { };
+          libvhdiFuse2 = pkgs.callPackage ./default.nix {
+            fuseBackend = "fuse2";
+          };
+          libvhdiFuse3 = pkgs.callPackage ./default.nix {
+            fuseBackend = "fuse3";
+          };
         in
         {
-          inherit libvhdi;
-          default = libvhdi;
+          libvhdi = libvhdiFuse3;
+          default = libvhdiFuse3;
+          libvhdi-fuse2 = libvhdiFuse2;
+          libvhdi-fuse3 = libvhdiFuse3;
           # Alias kept for compatibility with previous test naming.
-          libvhdi-test = libvhdi;
+          libvhdi-test = libvhdiFuse3;
         }
       );
 
@@ -41,6 +47,7 @@
             packages = with pkgs; [
               nixpkgs-fmt
               nixpkgs-review
+              ripgrep
               shellcheck
               git
               jq
@@ -51,11 +58,14 @@
               echo ""
               echo "Available packages:"
               echo "  - libvhdi"
+              echo "  - libvhdi-fuse2"
+              echo "  - libvhdi-fuse3"
               echo "  - libvhdi-test"
               echo ""
               echo "Useful commands:"
               echo "  nix build .#libvhdi"
-              echo "  nix build .#libvhdi-test"
+              echo "  nix build .#libvhdi-fuse2"
+              echo "  nix build .#libvhdi-fuse3"
               echo "  nix flake check"
               echo ""
               echo "Update package metadata:"
@@ -67,8 +77,8 @@
 
       # Checks for CI
       checks = forAllSystems (system: {
-        libvhdi-builds = self.packages.${system}.libvhdi;
-        libvhdi-test = self.packages.${system}.libvhdi-test;
+        libvhdi-fuse2 = self.packages.${system}.libvhdi-fuse2;
+        libvhdi-fuse3 = self.packages.${system}.libvhdi-fuse3;
       });
     };
 }

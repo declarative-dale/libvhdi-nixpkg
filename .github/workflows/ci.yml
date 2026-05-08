@@ -30,8 +30,24 @@ jobs:
           skipPush: true
         continue-on-error: true
 
-      - name: Build libvhdi
-        run: nix build .#libvhdi -L
+      - name: Build libvhdi variants
+        run: |
+          nix build .#libvhdi-fuse2 -o result-fuse2 -L
+          nix build .#libvhdi-fuse3 -o result-fuse3 -L
+
+      - name: Confirm FUSE backends
+        run: |
+          set -euo pipefail
+
+          ldd result-fuse2/bin/vhdimount | tee fuse2.ldd
+          grep -q 'libfuse.so' fuse2.ldd
+          if grep -q 'libfuse3.so' fuse2.ldd; then
+            echo "FUSE2 variant linked libfuse3 unexpectedly" >&2
+            exit 1
+          fi
+
+          ldd result-fuse3/bin/vhdimount | tee fuse3.ldd
+          grep -q 'libfuse3.so' fuse3.ldd
 
       - name: Push built package to Cachix
         if: vars.CACHIX_CACHE_NAME != ''
@@ -45,9 +61,10 @@ jobs:
             exit 0
           fi
 
-          out_path=$(readlink -f result)
-          echo "Pushing built package output: $out_path"
-          printf '%s\n' "$out_path" | cachix push "${{ vars.CACHIX_CACHE_NAME }}"
+          out_paths=$(readlink -f result-fuse2 result-fuse3)
+          echo "Pushing built package outputs:"
+          printf '%s\n' "$out_paths"
+          printf '%s\n' "$out_paths" | cachix push "${{ vars.CACHIX_CACHE_NAME }}"
 
   checks:
     runs-on: ubuntu-latest

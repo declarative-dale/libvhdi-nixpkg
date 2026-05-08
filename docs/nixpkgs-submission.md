@@ -47,8 +47,10 @@ Copy the package file:
    cp default.nix pkgs/by-name/li/libvhdi/package.nix
    ```
 
-The repository package is already in nixpkgs form: `stdenv.mkDerivation rec`, hardcoded
-`version` and `hash`, upstream tests enabled, and no flake-only parameters.
+The repository package is already in nixpkgs form: `stdenv.mkDerivation rec`,
+hardcoded `version` and `hash`, and upstream tests enabled. The optional
+`fuseBackend` argument defaults to the upstream-preferred FUSE3 build and can be
+overridden to `"fuse2"` if nixpkgs review wants a FUSE2 variant.
 
 ### Step 4: Add Yourself to Maintainers (if needed)
 
@@ -96,6 +98,7 @@ Provides:
 - Source: GitHub libyal/libvhdi releases
 - License: LGPL-3.0-or-later
 - Build system: Autotools
+- FUSE backend: FUSE3 by default, FUSE2 available through `fuseBackend = "fuse2"`
 - Version: 20251119
 ```
 

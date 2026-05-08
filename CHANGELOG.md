@@ -6,6 +6,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Added
+- Added explicit `libvhdi-fuse2` and `libvhdi-fuse3` flake outputs so both
+  upstream FUSE backends are built as real variants.
+- Added install checks that verify `vhdimount` links the selected FUSE backend.
+
+### Changed
+- Kept `libvhdi` as the FUSE3 default and documented FUSE2 compatibility through
+  the `libvhdi-fuse2` output.
+- Updated CI and update automation to build and inspect both FUSE variants.
+
 ## [20251119] - 2026-02-27
 
 ### Changed

@@ -15,17 +15,27 @@ Current upstream release: `20251119`
 - `vhdiinfo`: command-line VHD/VHDX metadata inspection tool
 - `vhdimount`: FUSE-based VHD/VHDX mounting tool
 
-Python bindings are disabled for the initial package. Both `fuse` and `fuse3`
-remain in `buildInputs` intentionally: downstream users still need FUSE2
-compatibility, while the current build detects and links `libfuse3` when it is
-available.
+Python bindings are disabled for the initial package. Upstream libvhdi supports
+FUSE2 and FUSE3 as alternative configure-time backends; it does not build one
+`vhdimount` binary that links both. This flake exposes both backends as separate
+derivations:
+
+- `libvhdi` / `libvhdi-fuse3`: default upstream-preferred FUSE3 build
+- `libvhdi-fuse2`: FUSE2 compatibility build
 
 ## Quick Start
 
-Build the package:
+Build the default FUSE3 package:
 
 ```bash
 nix build .#libvhdi -L
+```
+
+Build a specific FUSE backend:
+
+```bash
+nix build .#libvhdi-fuse2 -L
+nix build .#libvhdi-fuse3 -L
 ```
 
 Run the installed tools:
@@ -69,12 +79,14 @@ nix flake check --no-write-lock-file -L
 
 - `packages.x86_64-linux.libvhdi`
 - `packages.x86_64-linux.default`
+- `packages.x86_64-linux.libvhdi-fuse2`
+- `packages.x86_64-linux.libvhdi-fuse3`
 - `packages.x86_64-linux.libvhdi-test`
-- `checks.x86_64-linux.libvhdi-builds`
-- `checks.x86_64-linux.libvhdi-test`
+- `checks.x86_64-linux.libvhdi-fuse2`
+- `checks.x86_64-linux.libvhdi-fuse3`
 
-The flake also declares `aarch64-linux` outputs. Local checks on non-matching
-systems are skipped unless you explicitly ask Nix to evaluate all systems.
+The flake currently declares only `x86_64-linux` outputs, matching the local and
+CI build target for this package repository.
 
 ## Development
 
@@ -90,12 +102,15 @@ Common checks:
 nix develop .#default -c nixpkgs-fmt --check default.nix flake.nix
 nix develop .#default -c shellcheck update.sh
 nix build .#libvhdi -L
+nix build .#libvhdi-fuse2 -L
+nix build .#libvhdi-fuse3 -L
 nix flake check --no-write-lock-file -L
 ```
 
 The derivation enables upstream `make check` and patches test shebangs before
 the check phase. The install check verifies that `libvhdi.so`, `vhdiinfo`, and
-`vhdimount` are installed, then runs both tools with `-V`.
+`vhdimount` are installed, runs both tools with `-V`, and confirms that
+`vhdimount` links the selected FUSE backend.
 
 ## Updating
 
@@ -117,7 +132,8 @@ After an update, run:
 
 ```bash
 nix develop .#default -c nixpkgs-fmt default.nix flake.nix
-nix build .#libvhdi -L
+nix build .#libvhdi-fuse2 -L
+nix build .#libvhdi-fuse3 -L
 nix flake check --no-write-lock-file -L
 ```
 
@@ -130,17 +146,17 @@ libvhdi `YYYYMMDD` tag, it:
 
 - runs `./update.sh`, which uses Nix's built-in `nix store prefetch-file`
 - formats and lints the package files
-- builds `.#libvhdi`
+- builds `.#libvhdi-fuse2` and `.#libvhdi-fuse3`
 - runs `nix flake check --no-write-lock-file -L`
-- pushes the built `result` output to Cachix when `CACHIX_CACHE_NAME` and
+- pushes the built variant outputs to Cachix when `CACHIX_CACHE_NAME` and
   `CACHIX_AUTH_TOKEN` are configured
 - commits the updated `default.nix`
 - creates and pushes a repository tag with the same name as the upstream tag
 
 The workflow configures Cachix with `skipPush: true` before building, then calls
-`cachix push` explicitly on the `result` path after `nix build`. This avoids
-uploading fetched source tarballs or other store paths merely produced during
-the build.
+`cachix push` explicitly on the built variant output paths after `nix build`.
+This avoids uploading fetched source tarballs or other store paths merely
+produced during the build.
 
 The regular CI workflow also has a `tag-release` job, modeled after the
 `xo-nixpkg` workflow. On successful pushes to `main`, it verifies that the

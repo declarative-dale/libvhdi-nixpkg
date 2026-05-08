@@ -13,10 +13,34 @@
 , pkg-config
 , fuse
 , fuse3
+, fuseBackend ? "fuse3"
 , zlib
 ,
 }:
 
+let
+  validFuseBackends = [
+    "fuse2"
+    "fuse3"
+  ];
+  fusePackage =
+    if fuseBackend == "fuse2" then
+      fuse
+    else
+      fuse3;
+  expectedFuseLibrary =
+    if fuseBackend == "fuse2" then
+      "libfuse.so"
+    else
+      "libfuse3.so";
+  unexpectedFuseLibrary =
+    if fuseBackend == "fuse2" then
+      "libfuse3.so"
+    else
+      "libfuse.so";
+in
+assert lib.assertMsg (lib.elem fuseBackend validFuseBackends)
+  "libvhdi: fuseBackend must be one of: ${lib.concatStringsSep ", " validFuseBackends}";
 stdenv.mkDerivation rec {
   pname = "libvhdi";
   version = "20251119";
@@ -32,16 +56,13 @@ stdenv.mkDerivation rec {
   ];
 
   buildInputs = [
-    # Keep both FUSE generations: downstream users still need FUSE2 compatibility,
-    # while this build detects and links libfuse3 when it is available.
-    fuse
-    fuse3
+    # Upstream supports FUSE2 and FUSE3 as alternative configure-time backends.
+    # Keep one FUSE generation in each derivation so autodetection is explicit.
+    fusePackage
     zlib # Compression support
   ];
 
   configureFlags = [
-    "--enable-shared"
-    "--enable-static=no"
     "--enable-python=no"
     "--with-libfuse=yes"
     "--enable-multi-threading-support"
@@ -66,8 +87,20 @@ stdenv.mkDerivation rec {
     "$out/bin/vhdiinfo" -V
     "$out/bin/vhdimount" -V
 
+    vhdimount_deps="$(ldd "$out/bin/vhdimount")"
+    printf '%s\n' "$vhdimount_deps"
+    printf '%s\n' "$vhdimount_deps" | grep -q "${expectedFuseLibrary}"
+    if printf '%s\n' "$vhdimount_deps" | grep -q "${unexpectedFuseLibrary}"; then
+      echo "vhdimount linked unexpected FUSE backend: ${unexpectedFuseLibrary}" >&2
+      exit 1
+    fi
+
     runHook postInstallCheck
   '';
+
+  passthru = {
+    inherit fuseBackend;
+  };
 
   meta = with lib; {
     description = "Library and tools to access the Virtual Hard Disk (VHD) image format";

@@ -1,5 +1,5 @@
 #!/usr/bin/env nix-shell
-#!nix-shell -i bash -p curl git gnused nix
+#!nix-shell -i bash -p curl git gnused jq nix
 # shellcheck shell=bash
 
 set -euo pipefail
@@ -42,7 +42,7 @@ fi
 
 echo "Prefetching source hash..."
 prefetch_output=$(nix store prefetch-file --json --no-pretty --hash-type sha256 "$tarball_url")
-new_hash=$(printf '%s\n' "$prefetch_output" | sed -n 's/.*"hash":"\([^"]*\)".*/\1/p' | head -1)
+new_hash=$(printf '%s\n' "$prefetch_output" | jq -r '.hash // empty')
 
 if [ -z "$new_hash" ]; then
     echo "Failed to extract source hash from nix store prefetch-file output" >&2
