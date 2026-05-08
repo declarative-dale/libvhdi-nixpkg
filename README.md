@@ -144,6 +144,7 @@ The GitHub Actions workflow in
 a daily schedule and can also be started manually. When it sees a newer upstream
 libvhdi `YYYYMMDD` tag, it:
 
+- reads package versions from the flake with `nix eval`
 - runs `./update.sh`, which uses Nix's built-in `nix store prefetch-file`
 - formats and lints the package files
 - builds `.#libvhdi-fuse2` and `.#libvhdi-fuse3`

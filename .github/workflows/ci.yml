@@ -109,6 +109,12 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
 
+      - name: Install Nix
+        if: steps.app_token.outcome == 'success'
+        uses: cachix/install-nix-action@v31
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+
       - name: Detect libvhdi version tag
         if: steps.app_token.outcome == 'success'
         id: detect_tag
@@ -119,10 +125,15 @@ jobs:
             printf '%s\n' "$@" >> "$GITHUB_OUTPUT"
           }
 
-          version=$(sed -nE 's/^[[:space:]]*version[[:space:]]*=[[:space:]]*"([0-9]{8})";.*/\1/p' default.nix | head -n 1)
+          version=$(nix eval --raw --no-write-lock-file .#libvhdi.version)
 
           if [ -z "$version" ]; then
-            echo "Failed to extract libvhdi version from default.nix" >&2
+            echo "Failed to read libvhdi version from flake package metadata" >&2
+            exit 1
+          fi
+
+          if [[ ! "$version" =~ ^[0-9]{8}$ ]]; then
+            echo "Package version '$version' is not a libvhdi YYYYMMDD release tag" >&2
             exit 1
           fi
 

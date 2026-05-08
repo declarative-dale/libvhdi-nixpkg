@@ -47,9 +47,13 @@ jobs:
         run: |
           set -euo pipefail
 
-          current_version=$(sed -nE 's/^[[:space:]]*version[[:space:]]*=[[:space:]]*"([0-9]{8})";.*/\1/p' default.nix | head -n 1)
+          package_version() {
+            nix eval --raw --no-write-lock-file .#libvhdi.version
+          }
+
+          current_version=$(package_version)
           if [ -z "$current_version" ]; then
-            echo "Failed to read current package version from default.nix" >&2
+            echo "Failed to read current package version from flake package metadata" >&2
             exit 1
           fi
 
@@ -62,9 +66,9 @@ jobs:
             exit 1
           fi
 
-          new_version=$(sed -nE 's/^[[:space:]]*version[[:space:]]*=[[:space:]]*"([0-9]{8})";.*/\1/p' default.nix | head -n 1)
+          new_version=$(package_version)
           if [ -z "$new_version" ]; then
-            echo "Failed to read updated package version from default.nix" >&2
+            echo "Failed to read updated package version from flake package metadata" >&2
             exit 1
           fi
 
