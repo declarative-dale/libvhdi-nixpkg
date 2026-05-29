@@ -22,10 +22,9 @@ jobs:
           nix_path: nixpkgs=channel:nixos-unstable
 
       - name: Setup Cachix (optional)
-        if: vars.CACHIX_CACHE_NAME != ''
         uses: cachix/cachix-action@v17
         with:
-          name: ${{ vars.CACHIX_CACHE_NAME }}
+          name: ${{ vars.CACHIX_CACHE_NAME || 'libvhdi-nixpkg' }}
           authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
           skipPush: true
         continue-on-error: true
@@ -50,8 +49,8 @@ jobs:
           grep -q 'libfuse3.so' fuse3.ldd
 
       - name: Push built package to Cachix
-        if: vars.CACHIX_CACHE_NAME != ''
         env:
+          CACHE_NAME: ${{ vars.CACHIX_CACHE_NAME || 'libvhdi-nixpkg' }}
           CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
         run: |
           set -euo pipefail
@@ -64,7 +63,7 @@ jobs:
           out_paths=$(readlink -f result-fuse2 result-fuse3)
           echo "Pushing built package outputs:"
           printf '%s\n' "$out_paths"
-          printf '%s\n' "$out_paths" | cachix push "${{ vars.CACHIX_CACHE_NAME }}"
+          printf '%s\n' "$out_paths" | cachix push "$CACHE_NAME"
 
   checks:
     runs-on: ubuntu-latest
