@@ -1,6 +1,10 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 # libvhdi-nix
 
+[!WARNING]
+This repo is being archived, it was only created to use XenOrchestra on nix and now that nixpkg grabs libvhdi from it's upstream source automatically
+
+
 Standalone Nix packaging for [libvhdi](https://github.com/libyal/libvhdi), the
 libyal library and toolset for reading Virtual Hard Disk images.
 
